@@ -1,4 +1,7 @@
 
+# We don't want binaries in the repo
+bin
+
 # For testing purposes
 .env
 employees.sqlite3

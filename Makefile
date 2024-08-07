@@ -1,3 +1,6 @@
 
+build:
+	go build -o bin/ ./cmd/...
+
 install:
 	go install ./cmd/...
