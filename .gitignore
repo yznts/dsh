@@ -1,0 +1,4 @@
+
+# For testing purposes
+.env
+employees.sqlite3
