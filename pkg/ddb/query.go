@@ -8,12 +8,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"go.kyoto.codes/zen/v3/slice"
+)
+
+// System schemas/tables
+var (
+	systemTablesSqlite    = []string{"sqlite_master", "sqlite_sequence", "sqlite_stat1"}
+	systemSchemasPostgres = []string{"pg_catalog", "information_schema"}
 )
 
 // Database specific queries
 var (
-	sqlTablesSqlite   = "SELECT name FROM sqlite_master WHERE type='table';"
-	sqlTablesPostgres = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
+	sqlTablesSqlite   = "SELECT name,'' FROM sqlite_master WHERE type='table';"
+	sqlTablesPostgres = "SELECT table_name,table_schema FROM information_schema.tables;"
 
 	sqlColumnsSqlite   = "SELECT name,type FROM PRAGMA_TABLE_INFO('%s')"
 	sqlColumnsPostgres = "SELECT column_name,data_type FROM information_schema.columns WHERE table_name = '%s'"
@@ -72,12 +80,31 @@ func QueryTables(db *sql.DB, scheme string) ([]Table, error) {
 		return tables, err
 	}
 	for rows.Next() {
-		var table string
-		err = rows.Scan(&table)
+		var table, schema string
+		err = rows.Scan(&table, &schema)
 		if err != nil {
 			return tables, err
 		}
-		tables = append(tables, Table{Name: table})
+		tables = append(tables, Table{Name: table, Schema: schema})
+	}
+	// Mark system tables
+	switch ResolveScheme(scheme) {
+	case "sqlite":
+		// SQLite doesn't include system tables into sqlite_master,
+		// so we have to manually add them.
+		tables = append(
+			tables,
+			slice.Map(systemTablesSqlite, func(t string) Table {
+				return Table{Name: t, System: true}
+			})...,
+		)
+	case "postgres":
+		tables = slice.Map(tables, func(t Table) Table {
+			if slice.Contains(systemSchemasPostgres, t.Schema) {
+				t.System = true
+			}
+			return t
+		})
 	}
 	return tables, nil
 }

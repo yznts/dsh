@@ -15,6 +15,7 @@ import (
 // Tool flags
 var (
 	fdsn   = flag.String("dsn", "", "Database connection (can be set via DSN/DATABASE/DATABASE_URL env)")
+	fall   = flag.Bool("all", false, "List all tables (including system)")
 	fcsv   = flag.Bool("csv", false, "Output in CSV format")
 	fjson  = flag.Bool("json", false, "Output in JSON format")
 	fjsonl = flag.Bool("jsonl", false, "Output in JSON lines format")
@@ -23,7 +24,7 @@ var (
 // Tool usage / description
 var (
 	fusage = "[flags...] [table]"
-	fdescr = "The dls utility lists tables (or table columns) in the database."
+	fdescr = "The dls utility lists tables/columns in the database."
 )
 
 // Database connection
@@ -66,11 +67,26 @@ func main() {
 		tables, err := ddb.QueryTables(db, dbdsn.Scheme)
 		dio.Error(stderr, err)
 
+		// Filter system tables
+		if !*fall {
+			tables = slice.Filter(tables, func(t ddb.Table) bool {
+				return !t.System
+			})
+		}
+
+		// If no schema, print 'N/A'
+		if slice.All(tables, func(t ddb.Table) bool { return t.Schema == "" }) {
+			tables = slice.Map(tables, func(t ddb.Table) ddb.Table {
+				t.Schema = "N/A"
+				return t
+			})
+		}
+
 		// Write tables
 		stdout.WriteTable(ddb.Data{
-			Cols: []string{"TABLE_NAME"},
+			Cols: []string{"TABLE_SCHEMA", "TABLE_NAME", "IS_SYSTEM"},
 			Rows: slice.Map(tables, func(t ddb.Table) []any {
-				return []any{t.Name}
+				return []any{t.Schema, t.Name, t.System}
 			}),
 		})
 	} else {

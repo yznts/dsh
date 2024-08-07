@@ -8,10 +8,15 @@ type Data struct {
 	Rows [][]any
 }
 
+// Table holds table meta information,
+// not the actual data.
 type Table struct {
-	Name string
+	Schema string
+	Name   string
+	System bool // Indicates whether it's a system table
 }
 
+// Column holds column meta information.
 type Column struct {
 	Name string
 	Type string
