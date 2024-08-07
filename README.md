@@ -25,7 +25,7 @@ You will have tools like:
 - `dcat`  - outputs table data (in the not-so-dumb way)
 
 With multiple output formats,
-e.g. json, jsonl (json lines), csv,
+e.g. JSON, JSONL (JSON lines), CSV,
 or pretty-formatted terminal output.
 
 ## Installation
