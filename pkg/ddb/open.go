@@ -5,6 +5,9 @@ import (
 	"errors"
 	"net/url"
 	"strings"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "modernc.org/sqlite"
 )
 
 func Open(dsn string) (Database, error) {

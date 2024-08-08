@@ -5,6 +5,8 @@ import (
 	"net/url"
 )
 
+// Connection is a wrapper around sql.DB that also stores the DSN and scheme.
+// Also, it holds database-agnostic methods.
 type Connection struct {
 	*sql.DB
 
@@ -12,6 +14,13 @@ type Connection struct {
 	Scheme string
 }
 
+// QueryData is a database-agnostic method that queries the database
+// with the given query and returns the result as a Data struct pointer.
+//
+// The Data struct contains the columns and rows of the result.
+//
+// Method is returning a pointer to avoid copying the Data struct,
+// which might be large.
 func (c *Connection) QueryData(query string) (*Data, error) {
 	rows, err := c.Query(query)
 	if err != nil {

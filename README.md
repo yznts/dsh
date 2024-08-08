@@ -9,28 +9,38 @@
 go install github.com/yznts/dsh/cmd/...
 ```
 
-Main purpose of this project is to provide set of utilities for working with databases.
+Main goal of the project is to provide a set of multiplatform tools
+to work with databases in a unified way,
+avoiding differences in UX between clients like `psql`, `sqlite3`, `mysql`, etc.
 
-Let's start straight from what it proposes:
-- Multi-platform support
-- Multi-database support (when it's possible)
-- Multiple output formats (JSON, JSONL, CSV, etc.)
-- UNIX-like approach (one tool, one purpose)
+It tries to stick with the UNIX-like naming and approach,
+where each tool does one thing and does it well.
+List database tables, or table columns? Just use `dls`.
+Get table contents? Use `dcat`.
+Or, if you need just to execute an SQL query, `dsql` is here for you.
+Want to get the output in JSON, JSONL, CSV?
+No problem, just specify an according flag, like `-json` or `-csv`.
 
 ![example](.github/assets/example.png)
 
-You will have tools like:
+Now, utility set includes:
 - `dls`   - lists database tables or table columns
 - `dsql`  - executes SQL queries
 - `dcat`  - outputs table data (in the not-so-dumb way)
 
-With multiple output formats,
-e.g. JSON, JSONL (JSON lines), CSV,
-or pretty-formatted terminal output.
+May be used with:
+- `sqlite`
+- `postgresql`
+
+And supports this output formats:
+- `json` (partial support)
+- `jsonl`
+- `csv`
+- `gloss` (default terminal output)
 
 ## Installation
 
-Now, you can install/use this tooling with this options:
+You have multiple ways to install/use this utility set:
 - Install in Go-way
 - Build by yourself
 - Spin-up a Docker container
