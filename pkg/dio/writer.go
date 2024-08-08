@@ -8,8 +8,8 @@ import (
 // It provides a common interface for all tools to write data/errors/etc.
 type Writer interface {
 	Multi() bool // Multi returns true if the writer supports multiple writes.
+	WriteData(*ddb.Data)
 	WriteError(error)
-	WriteTable(ddb.Data)
 }
 
 // WarningWriter is an optional interface that can be implemented by writers.

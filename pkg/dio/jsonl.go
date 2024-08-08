@@ -37,7 +37,7 @@ func (j *Jsonl) WriteError(err error) {
 	j.write(jsonx.Bytes(errmap))
 }
 
-func (j *Jsonl) WriteTable(data ddb.Data) {
+func (j *Jsonl) WriteData(data *ddb.Data) {
 	for _, row := range data.Rows {
 		obj := map[string]any{}
 		for i, col := range data.Cols {

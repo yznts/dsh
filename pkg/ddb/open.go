@@ -5,33 +5,56 @@ import (
 	"errors"
 	"net/url"
 	"strings"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "modernc.org/sqlite"
 )
 
-// Open opens a database connection based on the DSN.
-// The DSN must be in the format scheme://user:password@host:port/database?param=value
-func Open(dsn string) (*sql.DB, *url.URL, error) {
-	// Parse the DSN
+func Open(dsn string) (Database, error) {
+	// Validate and parse dsn
+	if dsn == "" {
+		return nil, errors.New("empty DSN")
+	}
 	dsnurl, err := url.Parse(dsn)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	// Open the database, depending on the scheme
-	var db *sql.DB
-	switch ResolveScheme(dsnurl.Scheme) {
-	case "sqlite":
+
+	// Resolve connection and actual scheme, depending on the DSN scheme
+	switch dsnurl.Scheme {
+
+	case "sqlite", "sqlite3":
 		// To open a SQLite database, we need to remove the scheme and leading slashes
 		_dsnurl, _ := url.Parse(dsn)
 		_dsnurl.Scheme = ""
 		_dsnurlstr := strings.ReplaceAll(_dsnurl.String(), "//", "")
-		db, err = sql.Open("sqlite", _dsnurlstr)
+		// Open sql database connection
+		sqldb, err := sql.Open("sqlite", _dsnurlstr)
+		if err != nil {
+			return nil, err
+		}
+		// Compose the database object
+		return &Sqlite{
+			Connection: Connection{
+				DB:     sqldb,
+				DSN:    dsnurl,
+				Scheme: "sqlite",
+			},
+		}, nil
+
 	case "postgres":
-		db, err = sql.Open("pgx", dsn)
+		// Open sql database connection
+		sqldb, err := sql.Open("pgx", dsn)
+		if err != nil {
+			return nil, err
+		}
+		// Compose the database object
+		return &Postgres{
+			Connection: Connection{
+				DB:     sqldb,
+				DSN:    dsnurl,
+				Scheme: "postgres",
+			},
+		}, nil
+
 	default:
-		err = errors.New("Empty DSN or unsupported database")
+		return nil, errors.New("unsupported database")
 	}
-	// Return the database connection
-	return db, dsnurl, err
 }

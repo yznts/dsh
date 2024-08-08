@@ -37,7 +37,7 @@ func (j *Json) WriteError(err error) {
 	j.write(jsonx.Bytes(errmap))
 }
 
-func (j *Json) WriteTable(data ddb.Data) {
+func (j *Json) WriteData(data *ddb.Data) {
 	j.write(jsonx.Bytes(map[string]any{
 		"cols": data.Cols,
 		"rows": data.Rows,

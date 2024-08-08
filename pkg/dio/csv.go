@@ -39,7 +39,7 @@ func (c *Csv) WriteError(err error) {
 	c.write([]string{err.Error()})
 }
 
-func (c *Csv) WriteTable(data ddb.Data) {
+func (c *Csv) WriteData(data *ddb.Data) {
 	// If it's the first write (no flushes), write the columns.
 	if !c.flushed {
 		c.flushed = true

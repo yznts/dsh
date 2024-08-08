@@ -1,10 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"io"
-	"net/url"
 	"os"
 	"strings"
 
@@ -30,10 +28,7 @@ var (
 )
 
 // Database connection
-var (
-	db    *sql.DB
-	dbdsn *url.URL
-)
+var db ddb.Database
 
 // Output writers
 var (
@@ -55,8 +50,8 @@ func main() {
 	stdout = dio.Open(os.Stdout, *fcsv, *fjson, *fjsonl)
 	stderr = dio.Open(os.Stderr, *fcsv, *fjson, *fjsonl)
 
-	// Resolve database connection
-	db, dbdsn, err = ddb.Open(logic.Or(*fdsn,
+	/// Resolve database connection
+	db, err = ddb.Open(logic.Or(*fdsn,
 		os.Getenv("DSN"),
 		os.Getenv("DATABASE"),
 		os.Getenv("DATABASE_URL")))
@@ -72,9 +67,9 @@ func main() {
 	}
 
 	// Execute the query
-	data, err := ddb.QueryData(db, query)
+	data, err := db.QueryData(query)
 	dio.Error(stderr, err)
 
 	// Write the result
-	stdout.WriteTable(data)
+	stdout.WriteData(data)
 }

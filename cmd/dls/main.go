@@ -1,9 +1,7 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
-	"net/url"
 	"os"
 
 	"github.com/yznts/dsh/pkg/ddb"
@@ -28,10 +26,7 @@ var (
 )
 
 // Database connection
-var (
-	db    *sql.DB
-	dbdsn *url.URL
-)
+var db ddb.Database
 
 // Output writers
 var (
@@ -54,7 +49,7 @@ func main() {
 	stderr = dio.Open(os.Stderr, *fcsv, *fjson, *fjsonl)
 
 	// Resolve database connection
-	db, dbdsn, err = ddb.Open(logic.Or(*fdsn,
+	db, err = ddb.Open(logic.Or(*fdsn,
 		os.Getenv("DSN"),
 		os.Getenv("DATABASE"),
 		os.Getenv("DATABASE_URL")))
@@ -64,13 +59,13 @@ func main() {
 	// Otherwise, list columns for provided table name.
 	if len(flag.Args()) == 0 {
 		// Get database tables
-		tables, err := ddb.QueryTables(db, dbdsn.Scheme)
+		tables, err := db.QueryTables()
 		dio.Error(stderr, err)
 
 		// Filter system tables
 		if !*fall {
 			tables = slice.Filter(tables, func(t ddb.Table) bool {
-				return !t.System
+				return !t.IsSystem
 			})
 		}
 
@@ -83,19 +78,19 @@ func main() {
 		}
 
 		// Write tables
-		stdout.WriteTable(ddb.Data{
+		stdout.WriteData(&ddb.Data{
 			Cols: []string{"TABLE_SCHEMA", "TABLE_NAME", "IS_SYSTEM"},
 			Rows: slice.Map(tables, func(t ddb.Table) []any {
-				return []any{t.Schema, t.Name, t.System}
+				return []any{t.Schema, t.Name, t.IsSystem}
 			}),
 		})
 	} else {
 		// Get database columns
-		columns, err := ddb.QueryColumns(db, dbdsn.Scheme, flag.Arg(0))
+		columns, err := db.QueryColumns(flag.Arg(0))
 		dio.Error(stderr, err)
 
 		// Write columns
-		stdout.WriteTable(ddb.Data{
+		stdout.WriteData(&ddb.Data{
 			Cols: []string{"COLUMN_NAME", "COLUMN_TYPE"},
 			Rows: slice.Map(columns, func(c ddb.Column) []any {
 				return []any{c.Name, c.Type}

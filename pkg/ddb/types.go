@@ -11,9 +11,9 @@ type Data struct {
 // Table holds table meta information,
 // not the actual data.
 type Table struct {
-	Schema string
-	Name   string
-	System bool // Indicates whether it's a system table
+	Schema   string
+	Name     string
+	IsSystem bool // Indicates whether it's a system table
 }
 
 // Column holds column meta information.

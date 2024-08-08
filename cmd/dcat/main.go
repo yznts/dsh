@@ -1,11 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
@@ -33,10 +31,7 @@ var (
 )
 
 // Database connection
-var (
-	db    *sql.DB
-	dbdsn *url.URL
-)
+var db ddb.Database
 
 // Output writers
 var (
@@ -79,7 +74,7 @@ func main() {
 	}
 
 	// Resolve database connection
-	db, dbdsn, err = ddb.Open(logic.Or(*fdsn,
+	db, err = ddb.Open(logic.Or(*fdsn,
 		os.Getenv("DSN"),
 		os.Getenv("DATABASE"),
 		os.Getenv("DATABASE_URL")))
@@ -92,8 +87,12 @@ func main() {
 	}
 
 	// Get rows count
-	count, err := ddb.Count(db, table, *fwhere)
+	data, err := db.QueryData(fmt.Sprintf("SELECT COUNT(*) FROM %s", table))
 	dio.Error(stderr, err)
+	count, ok := data.Rows[0][0].(int)
+	if !ok {
+		dio.Error(stderr, errors.New("can't resolve rows count"))
+	}
 
 	// If the total rows count is less than 1k, we can get back to non-limited mode.
 	if count < 1000 {
@@ -124,11 +123,11 @@ func main() {
 		}
 		query.WriteString(fmt.Sprintf("LIMIT 1000 OFFSET %d", offset))
 		// Execute query
-		data, err := ddb.QueryData(db, query.String())
+		data, err := db.QueryData(query.String())
 		dio.Error(stderr, err)
 		// Don't collect the data and just write it to the output,
 		// because we don't want to keep it in memory.
 		// That's why we are requiring closable writers here.
-		stdout.WriteTable(data)
+		stdout.WriteData(data)
 	}
 }

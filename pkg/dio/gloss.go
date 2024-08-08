@@ -46,7 +46,7 @@ func (g *Gloss) WriteError(err error) {
 	// We can write more data after that.
 }
 
-func (g *Gloss) WriteTable(data ddb.Data) {
+func (g *Gloss) WriteData(data *ddb.Data) {
 	// Transform rows to string
 	rowsstr := slice.Map(data.Rows, func(v []any) []string {
 		return slice.Map(v, func(v any) string {
