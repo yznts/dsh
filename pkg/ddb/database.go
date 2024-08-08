@@ -11,4 +11,7 @@ type Database interface {
 	QueryData(query string) (*Data, error) // Return a pointer because data amount might be large
 	QueryTables() ([]Table, error)
 	QueryColumns(table string) ([]Column, error)
+	QueryProcesses() ([]Process, error)
+
+	KillProcess(pid int, force bool) error
 }

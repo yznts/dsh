@@ -1,6 +1,7 @@
 package ddb
 
 import (
+	"errors"
 	"fmt"
 
 	"go.kyoto.codes/zen/v3/slice"
@@ -53,4 +54,12 @@ func (s *Sqlite) QueryColumns(table string) ([]Column, error) {
 	})
 	// Return
 	return columns, nil
+}
+
+func (s *Sqlite) QueryProcesses() ([]Process, error) {
+	return nil, errors.New("sqlite doesn't support process list query")
+}
+
+func (s *Sqlite) KillProcess(pid int, force bool) error {
+	return errors.New("sqlite doesn't support process killing")
 }

@@ -17,9 +17,11 @@ type Json struct {
 // It's unexpected behavior in our case,
 // so panic is necessary.
 func (j *Json) write(data []byte) {
+	data = append(data, '\n')
 	if _, err := j.w.Write(data); err != nil {
 		panic(err)
 	}
+
 	if err := j.w.Close(); err != nil {
 		panic(err)
 	}
@@ -33,14 +35,14 @@ func (j *Json) Multi() bool {
 }
 
 func (j *Json) WriteError(err error) {
-	errmap := map[string]any{"error": err.Error()}
+	errmap := map[string]any{"ERROR": err.Error()}
 	j.write(jsonx.Bytes(errmap))
 }
 
 func (j *Json) WriteData(data *ddb.Data) {
 	j.write(jsonx.Bytes(map[string]any{
-		"cols": data.Cols,
-		"rows": data.Rows,
+		"COLS": data.Cols,
+		"ROWS": data.Rows,
 	}))
 }
 

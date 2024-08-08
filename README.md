@@ -27,6 +27,8 @@ Now, utility set includes:
 - `dls`   - lists database tables or table columns
 - `dsql`  - executes SQL queries
 - `dcat`  - outputs table data (in the not-so-dumb way)
+- `dps`   - lists database processes (if supported by the database)
+- `dkill` - kills database processes (if supported by the database)
 
 May be used with:
 - `sqlite`
