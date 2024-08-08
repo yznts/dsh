@@ -23,7 +23,8 @@ func (p *Postgres) QueryTables() ([]Table, error) {
 	// Convert the data to a slice of Table objects
 	tables := slice.Map(data.Rows, func(r []any) Table {
 		return Table{
-			Name: r[0].(string),
+			Name:   r[0].(string),
+			Schema: r[1].(string),
 		}
 	})
 	// Mark system tables
