@@ -1,10 +1,7 @@
 package ddb
 
 import (
-	"database/sql"
 	"fmt"
-	"net/url"
-	"strings"
 
 	"go.kyoto.codes/zen/v3/slice"
 )
@@ -56,28 +53,4 @@ func (s *Sqlite) QueryColumns(table string) ([]Column, error) {
 	})
 	// Return
 	return columns, nil
-}
-
-func OpenSqlite(dsn string) (*Sqlite, error) {
-	// Parse the DSN
-	dsnurl, err := url.Parse(dsn)
-	if err != nil {
-		return nil, err
-	}
-	// To open a SQLite database, we need to remove the scheme and leading slashes
-	_dsnurl, _ := url.Parse(dsn)
-	_dsnurl.Scheme = ""
-	_dsnurlstr := strings.ReplaceAll(_dsnurl.String(), "//", "")
-	sqldb, err := sql.Open("sqlite", _dsnurlstr)
-	if err != nil {
-		return nil, err
-	}
-	// Return
-	return &Sqlite{
-		Connection: Connection{
-			DB:     sqldb,
-			DSN:    dsnurl,
-			Scheme: "sqlite",
-		},
-	}, nil
 }
