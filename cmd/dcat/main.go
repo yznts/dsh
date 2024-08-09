@@ -89,10 +89,7 @@ func main() {
 	// Get rows count
 	data, err := db.QueryData(fmt.Sprintf("SELECT COUNT(*) FROM %s", table))
 	dio.Error(stderr, err)
-	count, ok := data.Rows[0][0].(int)
-	if !ok {
-		dio.Error(stderr, errors.New("can't resolve rows count"))
-	}
+	count := int(data.Rows[0][0].(int64))
 
 	// If the total rows count is less than 1k, we can get back to non-limited mode.
 	if count < 1000 {
