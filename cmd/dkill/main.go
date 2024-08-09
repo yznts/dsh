@@ -15,18 +15,18 @@ import (
 
 // Tool flags
 var (
-	fdsn = flag.String("dsn", "", "Database connection (can be set via DSN/DATABASE/DATABASE_URL env)")
-	ftrm = flag.Bool("trm", false, "Terminate the process, instead of graceful shutdown")
-	fpid = flag.Bool("pid", false, "We're killing a process by PID (default)")
-	fdur = flag.Bool("dur", false, "We're killing all processes exceeding a provided duration (Go time.Duration format)")
-	frgx = flag.Bool("rgx", false, "We're killing all processes for query regex")
-	fusr = flag.Bool("usr", false, "We're killing all processes for username")
-	fdb  = flag.Bool("db", false, "We're killing all processes for database")
+	fdsn    = flag.String("dsn", "", "Database connection (can be set via DSN/DATABASE/DATABASE_URL env)")
+	fforce  = flag.Bool("force", false, "Terminate the process, instead of graceful shutdown")
+	fexceed = flag.Bool("exceed", false, "We're killing all processes exceeding a provided duration (Go time.Duration format)")
+	fquery  = flag.Bool("query", false, "We're killing all processes for query regex")
+	fuser   = flag.Bool("user", false, "We're killing all processes for username")
+	fpid    = flag.Bool("pid", false, "We're killing a process by PID (default)")
+	fdb     = flag.Bool("db", false, "We're killing all processes for database")
 )
 
 // Tool usage / description
 var (
-	fusage = "[flags...] <pid|duration|regex|username|database>"
+	fusage = "[flags...] <pid|duration|query|username|database>"
 	fdescr = "The dkill utility kills processes, depending on the flag and argument provided."
 )
 
@@ -74,21 +74,21 @@ func main() {
 			return p.Pid == pid
 		})
 		break
-	case *fdur:
+	case *fexceed:
 		dur, err := time.ParseDuration(flag.Arg(0))
 		dio.Error(stderr, err, "provided duration is not a valid Go time.Duration")
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return p.Duration > dur
 		})
 		break
-	case *frgx:
+	case *fquery:
 		rgx, err := regexp.Compile(flag.Arg(0))
 		dio.Error(stderr, err, "provided regex is not a valid Go regexp")
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return rgx.MatchString(p.Query)
 		})
 		break
-	case *fusr:
+	case *fuser:
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return p.Username == flag.Arg(0)
 		})
@@ -110,7 +110,7 @@ func main() {
 	// Kill the processes
 	statuses := map[int]error{}
 	for _, p := range kill {
-		statuses[p.Pid] = db.KillProcess(p.Pid, *ftrm)
+		statuses[p.Pid] = db.KillProcess(p.Pid, *fforce)
 	}
 
 	// Report the status
