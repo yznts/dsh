@@ -45,6 +45,7 @@ And supports this output formats:
 You have multiple ways to install/use this utility set:
 - Install in Go-way
 - Build by yourself
+- Download binaries
 - Spin-up a Docker container
 
 ### Install in Go-way
@@ -70,6 +71,12 @@ make build
 # You'll find binaries in the `bin` directory.
 # Feel free to move them to the desired location, e.g. /usr/local/bin.
 ```
+
+### Download binaries
+
+Also you have an option to download the latest binaries from the [Releases](https://github.com/yznts/dsh/releases) page.
+Please note, that darwin(macos) binaries are not signed!
+If you know a simple way to handle this issue, please open issue or PR.
 
 ### Spin-up a Docker container
 
