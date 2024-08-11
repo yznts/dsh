@@ -2,7 +2,7 @@
 <h1 align="center">dsh</h1>
 
 <p align="center">
-  Set of database tools
+  A set of command line database tools
 </p>
 
 ```go
