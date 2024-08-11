@@ -6,7 +6,7 @@
 </p>
 
 ```go
-go install github.com/yznts/dsh/cmd/...
+go install github.com/yznts/dsh/cmd/...@latest
 ```
 
 Main goal of the project is to provide a set of multiplatform tools
@@ -55,7 +55,7 @@ but you need to have Go installed on your machine,
 including `GOBIN` in your `PATH`.
 
 ```bash
-go install github.com/yznts/dsh/cmd/...
+go install github.com/yznts/dsh/cmd/...@latest
 ```
 
 ### Build by yourself
