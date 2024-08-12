@@ -7,10 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/yznts/dsh/pkg/dconf"
 	"github.com/yznts/dsh/pkg/ddb"
 	"github.com/yznts/dsh/pkg/dio"
-	"go.kyoto.codes/zen/v3/logic"
-	"go.kyoto.codes/zen/v3/slice"
 )
 
 // Tool flags
@@ -73,11 +72,10 @@ func main() {
 		}
 	}
 
-	// Resolve database connection
-	db, err = ddb.Open(logic.Or(*fdsn,
-		os.Getenv("DSN"),
-		os.Getenv("DATABASE"),
-		os.Getenv("DATABASE_URL")))
+	// Resolve dsn and database connection
+	dsn, err := dconf.GetDsn(*fdsn)
+	dio.Error(stderr, err)
+	db, err = ddb.Open(dsn)
 	dio.Error(stderr, err)
 
 	// Extract table name from arguments
@@ -96,11 +94,12 @@ func main() {
 		limited = false
 	}
 
-	// Make chunks
-	chunks := slice.Chunks(slice.Range(0, count), 1000)
+	// Make offsets list
+	offsets := []int{}
+	for offset := 0; offset < count; offset += 1000 {
+		offsets = append(offsets, offset)
+	}
 
-	// We need only first item from each chunk as an offset.
-	offsets := slice.Map(chunks, func(chunk []int) int { return chunk[0] })
 	// If we are limited, we need only first chunk.
 	// Also, we need to warn the user about it.
 	if limited {

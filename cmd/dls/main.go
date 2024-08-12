@@ -4,9 +4,9 @@ import (
 	"flag"
 	"os"
 
+	"github.com/yznts/dsh/pkg/dconf"
 	"github.com/yznts/dsh/pkg/ddb"
 	"github.com/yznts/dsh/pkg/dio"
-	"go.kyoto.codes/zen/v3/logic"
 	"go.kyoto.codes/zen/v3/slice"
 )
 
@@ -48,11 +48,10 @@ func main() {
 	stdout = dio.Open(os.Stdout, *fcsv, *fjson, *fjsonl)
 	stderr = dio.Open(os.Stderr, *fcsv, *fjson, *fjsonl)
 
-	// Resolve database connection
-	db, err = ddb.Open(logic.Or(*fdsn,
-		os.Getenv("DSN"),
-		os.Getenv("DATABASE"),
-		os.Getenv("DATABASE_URL")))
+	// Resolve dsn and database connection
+	dsn, err := dconf.GetDsn(*fdsn)
+	dio.Error(stderr, err)
+	db, err = ddb.Open(dsn)
 	dio.Error(stderr, err)
 
 	// If no arguments, list tables.

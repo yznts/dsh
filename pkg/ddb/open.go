@@ -20,7 +20,7 @@ func Open(dsn string) (Database, error) {
 		return nil, err
 	}
 
-	// Resolve connection and actual scheme, depending on the DSN scheme
+	// Resolve connection and actual scheme, depending on the provided DSN scheme
 	switch dsnurl.Scheme {
 
 	case "sqlite", "sqlite3":
@@ -42,7 +42,7 @@ func Open(dsn string) (Database, error) {
 			},
 		}, nil
 
-	case "postgres":
+	case "postgres", "postgresql":
 		// Open sql database connection
 		sqldb, err := sql.Open("pgx", dsn)
 		if err != nil {
