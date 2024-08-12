@@ -86,6 +86,6 @@ func (g *Gloss) WriteWarning(msg string) {
 	// We can write more data after that.
 }
 
-func NewPlain(w io.WriteCloser) *Gloss {
+func NewGloss(w io.WriteCloser) *Gloss {
 	return &Gloss{w: w}
 }

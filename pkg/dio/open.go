@@ -15,6 +15,6 @@ func Open(
 	case jsonl:
 		return NewJsonl(w)
 	default:
-		return NewPlain(w)
+		return NewGloss(w)
 	}
 }
