@@ -4,6 +4,7 @@ go 1.21.3
 
 require (
 	github.com/charmbracelet/lipgloss v0.12.1
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/jackc/pgx/v5 v5.6.0
 	go.kyoto.codes/zen/v3 v3.2.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -11,6 +12,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/x/ansi v0.1.4 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

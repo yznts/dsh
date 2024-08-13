@@ -33,6 +33,7 @@ Now, utility set includes:
 May be used with:
 - `sqlite`
 - `postgresql`
+- `mysql` (no certificates support yet)
 
 And supports this output formats:
 - `json` (partial support)

@@ -50,6 +50,11 @@ func (g *Gloss) WriteData(data *ddb.Data) {
 	// Transform rows to string
 	rowsstr := slice.Map(data.Rows, func(v []any) []string {
 		return slice.Map(v, func(v any) string {
+			// If value is []uint8, don't print it, just mark as not supported.
+			// Probably this type is a blob or something that driver can't convert.
+			if _, ok := v.([]uint8); ok {
+				return "<n/s>"
+			}
 			return fmt.Sprintf("%v", v)
 		})
 	})
