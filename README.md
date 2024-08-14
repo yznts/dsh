@@ -88,3 +88,46 @@ without polluting your system.
 ```bash
 docker run --rm -it ghcr.io/yznts/dsh:latest
 ```
+
+## Usage
+
+No need to copy-paste utilities descriptions here.
+Most of them you can recognize by their names.
+Each tool has its own help message, which you can get by running it with `-h` flag.
+From there you can understand tool purpose, how to use it and what flags are available.
+
+To avoid providing database connection details each time you run a tool,
+you can use environment variables.
+
+```bash
+$ export DSN="postgres://user:password@localhost:5432/dbname"
+$ dls # No need to provide -dsn here
+```
+
+DSN composition might be a bit challenging.
+Here is a general template for it:
+
+```
+[protocol]://[username]:[password]@[host]:[port]/[database]?[params]
+```
+
+Some examples of DSNs for different databases:
+
+```
+# SQLite
+# We can use both absolute and relative paths.
+sqlite:///abs/path/to/db.sqlite
+sqlite3://rel/path/to/db.sqlite
+
+# Postgres
+# Postgres DSN is quite straightforward.
+postgres://user:password@localhost:5432/dbname
+postgresql://user:password@localhost:5432/dbname
+postgresql://user:password@localhost:5432/dbname?sslmode=verify-full&sslrootcert=/path/to/ca.pem&sslkey=/path/to/client-key.pem&sslcert=/path/to/client-cert.pem
+
+# MySQL
+# Please note, that our MySQL integration doesn't support certificates yet.
+# Also, DSN is a bit different from the standard one.
+# It doesn't have a protocol part, which wraps the host+port part.
+mysql://user:password@localhost:3306/dbname?parseTime=true
+```

@@ -57,9 +57,9 @@ func (s *Sqlite) QueryColumns(table string) ([]Column, error) {
 }
 
 func (s *Sqlite) QueryProcesses() ([]Process, error) {
-	return nil, errors.New("sqlite doesn't support process list query")
+	return nil, errors.New("sqlite doesn't support process list query, use `lsof <file>` instead")
 }
 
 func (s *Sqlite) KillProcess(pid int, force bool) error {
-	return errors.New("sqlite doesn't support process killing")
+	return errors.New("sqlite doesn't support process killing, use `lsof <file>` + `kill` instead")
 }

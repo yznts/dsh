@@ -4,4 +4,5 @@ bin
 
 # For testing purposes
 .env
-employees.sqlite3
+compose.yml
+compose.yaml
