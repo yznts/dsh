@@ -2,11 +2,8 @@ package ddb
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"net/url"
 	"reflect"
-
-	"go.kyoto.codes/zen/v3/slice"
 )
 
 // Connection is a wrapper around sql.DB that also stores the DSN and scheme.
@@ -22,9 +19,13 @@ type Connection struct {
 // with the given query and returns the result as a Data struct pointer.
 //
 // The Data struct contains the columns and rows of the result.
-//
 // Method is returning a pointer to avoid copying the Data struct,
 // which might be large.
+//
+// This exact implementation is the most generic one.
+// It utilizes 'any' type to store the values of the result
+// and leaves all type assertion to the underlying driver.
+// For some databases, like MySQL, we might need to override this method.
 func (c *Connection) QueryData(query string) (*Data, error) {
 	// Execute the query.
 	rows, err := c.Query(query)
@@ -33,24 +34,28 @@ func (c *Connection) QueryData(query string) (*Data, error) {
 	}
 	defer rows.Close()
 	// Get columns information.
-	cols, err := rows.ColumnTypes()
+	cols, err := rows.Columns()
 	if err != nil {
 		return nil, err
 	}
 	// Initialize the Data struct.
 	// It holds both the columns and rows of the result.
 	data := &Data{
-		Cols: slice.Map(cols, func(c *sql.ColumnType) string { return c.Name() }),
+		Cols: cols,
 	}
 	// Define scan target row.
 	// This is a slice of pointers,
 	// so we need to copy values on each iteration.
 	var scan []any
-	for _, col := range cols {
-		// Create a new pointer if corresponding column type.
-		ptr := reflect.New(col.ScanType())
-		// Append the pointer to the scan row
-		scan = append(scan, ptr.Interface())
+	for range cols {
+		// We're using new(any) here as the most generic solution,
+		// so we're leaving the type assertion to the driver.
+		// In some cases (like MySQL) we will need to override QueryData method
+		// to handle type assertion correctly.
+		//
+		// We're not using col.ScanType() here because it's not always correct.
+		// For example, postgres driver doesn't report nullable types correctly (sql.NullString).
+		scan = append(scan, new(any))
 	}
 	for rows.Next() {
 		// Scan the row into prepared pointers
@@ -58,16 +63,10 @@ func (c *Connection) QueryData(query string) (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Copy the values from the pointers to the Data struct
+		// Copy exact values from the pointers to the Data struct
 		var row []any
 		for _, ptr := range scan {
-			// If it's a nullable type, get the value
-			if ptr, ok := ptr.(interface{ Value() (driver.Value, error) }); ok {
-				val, _ := ptr.Value()
-				row = append(row, val)
-				continue
-			}
-			// Otherwise, get the value from the pointer
+			// Get value from the pointer and append it to the row
 			row = append(row, reflect.ValueOf(ptr).Elem().Interface())
 		}
 		// Append the row to the Data holder
