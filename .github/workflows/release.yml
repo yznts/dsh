@@ -64,3 +64,4 @@ jobs:
             goarch: ${{ matrix.goarch }}
             multi_binaries: true
             project_path: ./cmd/...
+            ldflags: -s -w
