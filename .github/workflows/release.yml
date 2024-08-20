@@ -65,7 +65,8 @@ jobs:
             goarch: ${{ matrix.goarch }}
             multi_binaries: true
             project_path: ./cmd/...
-            build_flags: -ldflags="-s -w" -tags daemon
+            ldflags: -s -w
+            build_flags: -tags daemon
             asset_name: ${BINARY_NAME}-daemon-${RELEASE_TAG}-${{ matrix.goos }}-${{ matrix.goarch }}
 
         - name: Go Release Daemonless
@@ -76,5 +77,5 @@ jobs:
             goarch: ${{ matrix.goarch }}
             multi_binaries: true
             project_path: ./cmd/...
-            build_flags: -ldflags="-s -w"
+            ldflags: -s -w
             asset_name: ${BINARY_NAME}-daemonless-${RELEASE_TAG}-${{ matrix.goos }}-${{ matrix.goarch }}
