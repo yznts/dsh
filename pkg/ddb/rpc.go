@@ -1,16 +1,9 @@
-//go:build daemon
-
 package ddb
 
 import (
 	"net/rpc"
 	"os/exec"
 )
-
-type RpcKillProcessArgs struct {
-	Pid   int
-	Force bool
-}
 
 type Rpc struct {
 	*rpc.Client
@@ -42,7 +35,10 @@ func (c *Rpc) QueryProcesses() ([]Process, error) {
 }
 
 func (c *Rpc) KillProcess(pid int, force bool) error {
-	err := c.Call("Rpc.KillProcess", RpcKillProcessArgs{pid, force}, nil)
+	err := c.Call("Rpc.KillProcess", struct {
+		Pid   int
+		Force bool
+	}{pid, force}, nil)
 	return err
 }
 
