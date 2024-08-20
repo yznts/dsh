@@ -67,7 +67,7 @@ jobs:
             project_path: ./cmd/...
             ldflags: -s -w
             build_flags: -tags daemon
-            asset_name: ${BINARY_NAME}-daemon-${RELEASE_TAG}-${{ matrix.goos }}-${{ matrix.goarch }}
+            asset_name: dsh-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
 
         - name: Go Release Daemonless
           uses: wangyoucao577/go-release-action@v1
@@ -78,4 +78,4 @@ jobs:
             multi_binaries: true
             project_path: ./cmd/...
             ldflags: -s -w
-            asset_name: ${BINARY_NAME}-daemonless-${RELEASE_TAG}-${{ matrix.goos }}-${{ matrix.goarch }}
+            asset_name: dsh-daemonless-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
