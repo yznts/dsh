@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"os"
 
 	"github.com/yznts/dsh/pkg/dconf"
@@ -52,6 +53,9 @@ func main() {
 	dio.Error(stderr, err)
 	db, err = ddb.Open(dsn)
 	dio.Error(stderr, err)
+	if db, iscloser := db.(io.Closer); iscloser {
+		defer db.Close()
+	}
 
 	// Query the database for the currently running processes
 	processes, err := db.QueryProcesses()

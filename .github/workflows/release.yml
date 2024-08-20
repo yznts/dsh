@@ -56,7 +56,8 @@ jobs:
     steps:
         - name: Check out
           uses: actions/checkout@v4
-        - name: Go Release
+
+        - name: Go Release Daemon
           uses: wangyoucao577/go-release-action@v1
           with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -64,4 +65,16 @@ jobs:
             goarch: ${{ matrix.goarch }}
             multi_binaries: true
             project_path: ./cmd/...
-            ldflags: -s -w
+            build_flags: "-ldflags='-s -w' -tags daemon"
+            asset_name: ${BINARY_NAME}-daemon-${RELEASE_TAG}-${{ matrix.goos }}-${{ matrix.goarch }}
+
+        - name: Go Release Daemonless
+          uses: wangyoucao577/go-release-action@v1
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            goos: ${{ matrix.goos }}
+            goarch: ${{ matrix.goarch }}
+            multi_binaries: true
+            project_path: ./cmd/...
+            build_flags: "-ldflags='-s -w'"
+            asset_name: ${BINARY_NAME}-daemonless-${RELEASE_TAG}-${{ matrix.goos }}-${{ matrix.goarch }}

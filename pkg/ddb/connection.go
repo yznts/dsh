@@ -1,3 +1,5 @@
+//go:build !daemon
+
 package ddb
 
 import (

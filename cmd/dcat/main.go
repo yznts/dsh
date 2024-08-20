@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 // Tool flags
 var (
 	fdsn   = flag.String("dsn", "", "Database connection (can be set via DSN/DATABASE/DATABASE_URL env)")
+	fsql   = flag.Bool("sql", false, "Output in SQL format")
 	fcsv   = flag.Bool("csv", false, "Output in CSV format")
 	fjsonl = flag.Bool("jsonl", false, "Output in JSON lines format")
 	fwhere = flag.String("where", "", "WHERE clause")
@@ -57,8 +59,8 @@ func main() {
 	//
 	// The only exception is gloss writer.
 	// We will limit the output to 1k rows in that case.
-	stdout = dio.Open(os.Stdout, *fcsv, false, *fjsonl)
-	stderr = dio.Open(os.Stderr, *fcsv, false, *fjsonl)
+	stdout = dio.Open(os.Stdout, *fsql, *fcsv, false, *fjsonl)
+	stderr = dio.Open(os.Stderr, *fsql, *fcsv, false, *fjsonl)
 
 	// Determine if the output format supports multiple writes.
 	// Otherwise, we are limiting the output to 1k rows with a warning.
@@ -77,6 +79,9 @@ func main() {
 	dio.Error(stderr, err)
 	db, err = ddb.Open(dsn)
 	dio.Error(stderr, err)
+	if db, iscloser := db.(io.Closer); iscloser {
+		defer db.Close()
+	}
 
 	// Extract table name from arguments
 	table := flag.Arg(0)
@@ -107,6 +112,12 @@ func main() {
 		if stdout, warner := stdout.(dio.WarningWriter); warner {
 			stdout.WriteWarning("output is limited to 1k rows")
 		}
+	}
+
+	// If writer is SQL, we're setting appropriate mode and table name
+	if stdout, ok := stdout.(*dio.Sql); ok {
+		stdout.SetMode("data")
+		stdout.SetTable(table)
 	}
 
 	// Iterate over chunks and query the database

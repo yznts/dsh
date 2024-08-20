@@ -55,6 +55,9 @@ func main() {
 	dio.Error(stderr, err)
 	db, err = ddb.Open(dsn)
 	dio.Error(stderr, err)
+	if db, iscloser := db.(io.Closer); iscloser {
+		defer db.Close()
+	}
 
 	// Extract sql query from arguments
 	query := strings.Join(flag.Args(), " ")

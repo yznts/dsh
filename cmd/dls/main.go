@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"os"
 
 	"github.com/yznts/dsh/pkg/dconf"
@@ -14,6 +15,7 @@ import (
 var (
 	fdsn   = flag.String("dsn", "", "Database connection (can be set via DSN/DATABASE/DATABASE_URL env)")
 	fall   = flag.Bool("all", false, "List all tables (including system)")
+	fsql   = flag.Bool("sql", false, "Output in SQL format")
 	fcsv   = flag.Bool("csv", false, "Output in CSV format")
 	fjson  = flag.Bool("json", false, "Output in JSON format")
 	fjsonl = flag.Bool("jsonl", false, "Output in JSON lines format")
@@ -45,14 +47,17 @@ func main() {
 	flag.Parse()
 
 	// Resolve output writer
-	stdout = dio.Open(os.Stdout, *fcsv, *fjson, *fjsonl)
-	stderr = dio.Open(os.Stderr, *fcsv, *fjson, *fjsonl)
+	stdout = dio.Open(os.Stdout, *fsql, *fcsv, *fjson, *fjsonl)
+	stderr = dio.Open(os.Stderr, *fsql, *fcsv, *fjson, *fjsonl)
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
 	dio.Error(stderr, err)
 	db, err = ddb.Open(dsn)
 	dio.Error(stderr, err)
+	if db, iscloser := db.(io.Closer); iscloser {
+		defer db.Close()
+	}
 
 	// If no arguments, list tables.
 	// Otherwise, list columns for provided table name.
@@ -87,6 +92,12 @@ func main() {
 		// Get database columns
 		columns, err := db.QueryColumns(flag.Arg(0))
 		dio.Error(stderr, err)
+
+		// If writer is SQL, we're setting appropriate mode and table name
+		if stdout, ok := stdout.(*dio.Sql); ok {
+			stdout.SetMode("schema")
+			stdout.SetTable(flag.Arg(0))
+		}
 
 		// Write columns
 		stdout.WriteData(&ddb.Data{

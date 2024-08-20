@@ -1,8 +1,6 @@
 package dio
 
-import (
-	"github.com/yznts/dsh/pkg/ddb"
-)
+import "github.com/yznts/dsh/pkg/ddb"
 
 // Writer is an interface that must be implemented by all writers.
 // It provides a common interface for all tools to write data/errors/etc.
