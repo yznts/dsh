@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"io"
 	"os"
@@ -59,6 +60,52 @@ func main() {
 		defer db.Close()
 	}
 
+	// Validate flags compatibility
+	if *fall && *fsql {
+		dio.Error(stderr, errors.New("flag -all is not compatible with -sql (export of system columns)"))
+	}
+
+	// If writer is SQL, we have a separate processing for it.
+	if stdout, ok := stdout.(*dio.Sql); ok {
+		// Determine tables we want to extract.
+		// If no arguments, list all tables.
+		// Otherwise, use provided table name.
+		tables, err := db.QueryTables()
+		dio.Error(stderr, err)
+		if len(flag.Args()) > 0 {
+			tables = slice.Filter(tables, func(t ddb.Table) bool {
+				return t.Name == flag.Arg(0)
+			})
+		}
+
+		// Filter system tables
+		tables = slice.Filter(tables, func(t ddb.Table) bool {
+			return !t.IsSystem
+		})
+
+		// Write schema for each table
+		for _, table := range tables {
+			// Get columns
+			columns, err := db.QueryColumns(table.Name)
+			dio.Error(stderr, err)
+			// Set mode and table name
+			stdout.SetMode("schema")
+			stdout.SetTable(table.Name)
+			// Write columns
+			stdout.WriteData(&ddb.Data{
+				Cols: []string{"COLUMN_NAME", "COLUMN_TYPE"},
+				Rows: slice.Map(columns, func(c ddb.Column) []any {
+					return []any{c.Name, c.Type}
+				}),
+			})
+		}
+
+		// Exit, we're done here
+		return
+	}
+
+	// Otherwise, proceed with regular listing.
+
 	// If no arguments, list tables.
 	// Otherwise, list columns for provided table name.
 	if len(flag.Args()) == 0 {
@@ -92,12 +139,6 @@ func main() {
 		// Get database columns
 		columns, err := db.QueryColumns(flag.Arg(0))
 		dio.Error(stderr, err)
-
-		// If writer is SQL, we're setting appropriate mode and table name
-		if stdout, ok := stdout.(*dio.Sql); ok {
-			stdout.SetMode("schema")
-			stdout.SetTable(flag.Arg(0))
-		}
 
 		// Write columns
 		stdout.WriteData(&ddb.Data{
