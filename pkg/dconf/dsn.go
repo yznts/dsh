@@ -34,10 +34,14 @@ func GetDsn(dsn string) (string, error) {
 	}
 	// If dsn schema not found, try to resolve actual dsn from default configuration file
 	if dsnurl.Scheme == "" {
+		// If no default configuration found, return an error
+		if Default == nil {
+			return "", errors.New("dsn schema not found and no configuration file provided")
+		}
 		// If connection configuration found, go through the same process.
 		// Otherwise, it's dsn error.
 		if con, ok := Default.GetConnection(dsnurl.Path); ok {
-			return GetDsn(con.Conn)
+			return GetDsn(con.GetConn())
 		} else {
 			return "", errors.New("dsn schema not found")
 		}

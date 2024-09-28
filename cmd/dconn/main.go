@@ -51,9 +51,9 @@ func main() {
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	db, err = ddb.Open(dsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 
 	// Start rpc server
 	rpcserver(*frpc).Await()

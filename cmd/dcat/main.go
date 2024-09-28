@@ -70,15 +70,15 @@ func main() {
 		// Let's also check if the output format is gloss.
 		// Other formats are not supposed to be used without multiple writes.
 		if _, gloss := stdout.(*dio.Gloss); !gloss {
-			dio.Error(stderr, errors.New("output format does not support multiple writes"))
+			dio.Assert(stderr, errors.New("output format does not support multiple writes"))
 		}
 	}
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	db, err = ddb.Open(dsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	if db, iscloser := db.(io.Closer); iscloser {
 		defer db.Close()
 	}
@@ -86,12 +86,12 @@ func main() {
 	// Extract table name from arguments
 	table := flag.Arg(0)
 	if table == "" {
-		dio.Error(stderr, errors.New("missing table name"))
+		dio.Assert(stderr, errors.New("missing table name"))
 	}
 
 	// Get rows count
 	data, err := db.QueryData(fmt.Sprintf("SELECT COUNT(*) FROM %s", table))
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	count := int(data.Rows[0][0].(int64))
 
 	// If the total rows count is less than 1k, we can get back to non-limited mode.
@@ -131,7 +131,7 @@ func main() {
 		query.WriteString(fmt.Sprintf("LIMIT 1000 OFFSET %d", offset))
 		// Execute query
 		data, err := db.QueryData(query.String())
-		dio.Error(stderr, err)
+		dio.Assert(stderr, err)
 		// Don't collect the data and just write it to the output,
 		// because we don't want to keep it in memory.
 		// That's why we are requiring closable writers here.

@@ -3,6 +3,10 @@
 bin
 
 # For testing purposes
-.env
+.env*
 compose.yml
 compose.yaml
+sakila.sqlite3
+
+# Not ready yet
+cmd/dbrowse

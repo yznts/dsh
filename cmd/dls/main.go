@@ -3,23 +3,26 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"os"
 
 	"github.com/yznts/dsh/pkg/dconf"
 	"github.com/yznts/dsh/pkg/ddb"
 	"github.com/yznts/dsh/pkg/dio"
+	"go.kyoto.codes/zen/v3/logic"
 	"go.kyoto.codes/zen/v3/slice"
 )
 
 // Tool flags
 var (
 	fdsn   = flag.String("dsn", "", "Database connection (can be set via DSN/DATABASE/DATABASE_URL env)")
-	fall   = flag.Bool("all", false, "List all tables (including system)")
+	fsys   = flag.Bool("sys", false, "List all tables (including system)")
 	fsql   = flag.Bool("sql", false, "Output in SQL format")
 	fcsv   = flag.Bool("csv", false, "Output in CSV format")
 	fjson  = flag.Bool("json", false, "Output in JSON format")
 	fjsonl = flag.Bool("jsonl", false, "Output in JSON lines format")
+	flong  = flag.Bool("long", false, "Output in long format (with additional information)")
 )
 
 // Tool usage / description
@@ -53,16 +56,16 @@ func main() {
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	db, err = ddb.Open(dsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	if db, iscloser := db.(io.Closer); iscloser {
 		defer db.Close()
 	}
 
 	// Validate flags compatibility
-	if *fall && *fsql {
-		dio.Error(stderr, errors.New("flag -all is not compatible with -sql (export of system columns)"))
+	if *fsys && *fsql {
+		dio.Assert(stderr, errors.New("flag -sys is not compatible with -sql (export of system columns)"))
 	}
 
 	// If writer is SQL, we have a separate processing for it.
@@ -71,7 +74,7 @@ func main() {
 		// If no arguments, list all tables.
 		// Otherwise, use provided table name.
 		tables, err := db.QueryTables()
-		dio.Error(stderr, err)
+		dio.Assert(stderr, err)
 		if len(flag.Args()) > 0 {
 			tables = slice.Filter(tables, func(t ddb.Table) bool {
 				return t.Name == flag.Arg(0)
@@ -87,15 +90,15 @@ func main() {
 		for _, table := range tables {
 			// Get columns
 			columns, err := db.QueryColumns(table.Name)
-			dio.Error(stderr, err)
+			dio.Assert(stderr, err)
 			// Set mode and table name
 			stdout.SetMode("schema")
 			stdout.SetTable(table.Name)
 			// Write columns
 			stdout.WriteData(&ddb.Data{
-				Cols: []string{"COLUMN_NAME", "COLUMN_TYPE"},
+				Cols: []string{"COLUMN_NAME", "COLUMN_TYPE", "IS_PK", "IS_NL", "DEF", "FK"},
 				Rows: slice.Map(columns, func(c ddb.Column) []any {
-					return []any{c.Name, c.Type}
+					return []any{c.Name, c.Type, c.IsPrimary, c.IsNullable, c.Default, c.ForeignRef}
 				}),
 			})
 		}
@@ -111,10 +114,10 @@ func main() {
 	if len(flag.Args()) == 0 {
 		// Get database tables
 		tables, err := db.QueryTables()
-		dio.Error(stderr, err)
+		dio.Assert(stderr, err)
 
 		// Filter system tables
-		if !*fall {
+		if !*fsys {
 			tables = slice.Filter(tables, func(t ddb.Table) bool {
 				return !t.IsSystem
 			})
@@ -138,14 +141,54 @@ func main() {
 	} else {
 		// Get database columns
 		columns, err := db.QueryColumns(flag.Arg(0))
-		dio.Error(stderr, err)
+		dio.Assert(stderr, err)
 
-		// Write columns
+		// Switch behavior based on -long flag.
+		// If -long is set, list all column information.
+		// Otherwise, list only column names and types.
+		var (
+			cols = []string{}
+			rows = [][]any{}
+		)
+		if *flong {
+			cols = []string{
+				"COLUMN_NAME",
+				"COLUMN_TYPE",
+				"IS_PK",
+				"IS_NL",
+				"DEF",
+				"FK",
+			}
+			rows = slice.Map(columns, func(c ddb.Column) []any {
+				return []any{
+					c.Name,
+					c.Type,
+					c.IsPrimary,
+					c.IsNullable,
+					c.Default,
+					logic.Tr(c.ForeignRef != "",
+						fmt.Sprintf("%s upd(%s) del(%s)", c.ForeignRef, c.ForeignOnUpdate, c.ForeignOnDelete),
+						"",
+					),
+				}
+			})
+		} else {
+			cols = []string{
+				"COLUMN_NAME",
+				"COLUMN_TYPE",
+			}
+			rows = slice.Map(columns, func(c ddb.Column) []any {
+				return []any{
+					c.Name,
+					c.Type,
+				}
+			})
+		}
+
+		// Write data
 		stdout.WriteData(&ddb.Data{
-			Cols: []string{"COLUMN_NAME", "COLUMN_TYPE"},
-			Rows: slice.Map(columns, func(c ddb.Column) []any {
-				return []any{c.Name, c.Type}
-			}),
+			Cols: cols,
+			Rows: rows,
 		})
 	}
 }

@@ -47,14 +47,14 @@ func main() {
 	flag.Parse()
 
 	// Resolve output writer
-	stdout = dio.Open(os.Stdout, *fcsv, *fjson, *fjsonl)
-	stderr = dio.Open(os.Stderr, *fcsv, *fjson, *fjsonl)
+	stdout = dio.Open(os.Stdout, false, *fcsv, *fjson, *fjsonl)
+	stderr = dio.Open(os.Stderr, false, *fcsv, *fjson, *fjsonl)
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	db, err = ddb.Open(dsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	if db, iscloser := db.(io.Closer); iscloser {
 		defer db.Close()
 	}
@@ -64,13 +64,13 @@ func main() {
 	// If no query provided, read from STDIN
 	if query == "" {
 		querybts, err := io.ReadAll(os.Stdin)
-		dio.Error(stderr, err)
+		dio.Assert(stderr, err)
 		query = string(querybts)
 	}
 
 	// Execute the query
 	data, err := db.QueryData(query)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 
 	// Write the result
 	stdout.WriteData(data)

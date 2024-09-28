@@ -107,16 +107,66 @@ func (m *Mysql) QueryTables() ([]Table, error) {
 
 func (m *Mysql) QueryColumns(table string) ([]Column, error) {
 	// Query the database for the columns
-	data, err := m.QueryData(fmt.Sprintf("SELECT column_name,data_type FROM information_schema.columns WHERE table_name = '%s'", table))
+	dataCols, err := m.QueryData(fmt.Sprintf(`
+		SELECT
+			column_name,
+			data_type,
+			(CASE WHEN is_nullable = 'YES' THEN true ELSE false END) AS is_nullable,
+			column_default
+		FROM information_schema.columns
+		WHERE table_name = '%s'`, table))
 	if err != nil {
 		return nil, err
 	}
-	// Convert the data to a slice of Column objects
-	columns := slice.Map(data.Rows, func(r []any) Column {
-		return Column{
-			Name: r[0].(string),
-			Type: r[1].(string),
+	// Query the database for constraints
+	dataCons, err := m.QueryData(fmt.Sprintf(`
+		SELECT DISTINCT
+		    tc.CONSTRAINT_NAME,
+		    tc.CONSTRAINT_TYPE,
+		    kcu.TABLE_NAME AS referencing_table,
+		    kcu.COLUMN_NAME AS referencing_column,
+		    kcu.REFERENCED_TABLE_NAME AS referenced_table,
+		    kcu.REFERENCED_COLUMN_NAME AS referenced_column,
+		    rc.UPDATE_RULE AS foreign_on_update,
+		    rc.DELETE_RULE AS foreign_on_delete
+		FROM
+		    information_schema.TABLE_CONSTRAINTS AS tc
+		    JOIN information_schema.KEY_COLUMN_USAGE AS kcu
+		      ON tc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+		      AND tc.TABLE_SCHEMA = kcu.TABLE_SCHEMA
+		    LEFT JOIN information_schema.REFERENTIAL_CONSTRAINTS AS rc
+		      ON rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+		      AND rc.CONSTRAINT_SCHEMA = tc.TABLE_SCHEMA
+		WHERE
+		    tc.TABLE_NAME = '%s';
+		`, table))
+	if err != nil {
+		return nil, err
+	}
+	// Compose the columns
+	columns := slice.Map(dataCols.Rows, func(r []any) Column {
+		// Compose base column
+		col := Column{
+			Name:       r[0].(string),
+			Type:       r[1].(string),
+			IsNullable: r[2].(int64) == 1,
+			Default:    r[3],
 		}
+		// Find constraints information
+		for _, con := range dataCons.Rows {
+			if con[2].(string) == table && con[3].(string) == col.Name {
+				if con[1].(string) == "PRIMARY KEY" {
+					col.IsPrimary = true
+				}
+				if con[1].(string) == "FOREIGN KEY" {
+					col.ForeignRef = fmt.Sprintf("%s(%s)", con[4].(string), con[5].(string))
+					col.ForeignOnUpdate = con[6].(string)
+					col.ForeignOnDelete = con[7].(string)
+				}
+			}
+		}
+		// Compose constraints
+		return col
 	})
 	// Return
 	return columns, nil

@@ -56,37 +56,37 @@ func main() {
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	db, err = ddb.Open(dsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	if db, iscloser := db.(io.Closer); iscloser {
 		defer db.Close()
 	}
 
 	// Query the database for the currently running processes
 	processes, err := db.QueryProcesses()
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 
 	// Find out processes to kill
 	kill := []ddb.Process{}
 	switch {
 	case *fpid:
 		pid, err := strconv.Atoi(flag.Arg(0))
-		dio.Error(stderr, err, "provided PID is not a number")
+		dio.Assert(stderr, err, "provided PID is not a number")
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return p.Pid == pid
 		})
 		break
 	case *fexceed:
 		dur, err := time.ParseDuration(flag.Arg(0))
-		dio.Error(stderr, err, "provided duration is not a valid Go time.Duration")
+		dio.Assert(stderr, err, "provided duration is not a valid Go time.Duration")
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return p.Duration > dur
 		})
 		break
 	case *fquery:
 		rgx, err := regexp.Compile(flag.Arg(0))
-		dio.Error(stderr, err, "provided regex is not a valid Go regexp")
+		dio.Assert(stderr, err, "provided regex is not a valid Go regexp")
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return rgx.MatchString(p.Query)
 		})
@@ -103,7 +103,7 @@ func main() {
 		break
 	default:
 		pid, err := strconv.Atoi(flag.Arg(0))
-		dio.Error(stderr, err, "provided PID is not a number")
+		dio.Assert(stderr, err, "provided PID is not a number")
 		kill = slice.Filter(processes, func(p ddb.Process) bool {
 			return p.Pid == pid
 		})

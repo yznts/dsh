@@ -40,8 +40,16 @@ type Table struct {
 
 // Column holds column meta information.
 type Column struct {
-	Name string
-	Type string
+	Name       string
+	Type       string
+	IsPrimary  bool
+	IsNullable bool
+	Default    any
+
+	// Foreign key information
+	ForeignRef      string
+	ForeignOnUpdate string
+	ForeignOnDelete string
 }
 
 type Process struct {

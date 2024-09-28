@@ -50,16 +50,16 @@ func main() {
 
 	// Resolve dsn and database connection
 	dsn, err := dconf.GetDsn(*fdsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	db, err = ddb.Open(dsn)
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 	if db, iscloser := db.(io.Closer); iscloser {
 		defer db.Close()
 	}
 
 	// Query the database for the currently running processes
 	processes, err := db.QueryProcesses()
-	dio.Error(stderr, err)
+	dio.Assert(stderr, err)
 
 	// Write processes
 	stdout.WriteData(&ddb.Data{

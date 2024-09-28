@@ -10,7 +10,7 @@ import (
 	"go.kyoto.codes/zen/v3/slice"
 )
 
-// Csv is a writer that writes data as a multiple sql statements.
+// Sql is a writer that writes data as a multiple sql statements.
 // It can write both schema and data, depending on the mode.
 //
 // This is kind of special writer,
@@ -93,14 +93,18 @@ func (s *Sql) WriteData(data *ddb.Data) {
 	s.write([]byte(";\n\n"))
 }
 
+// SetMode sets the mode of the writer.
+// It can be either "data" or "schema".
 func (s *Sql) SetMode(mode string) {
 	s.mode = mode
 }
 
+// SetTable sets the table name.
 func (s *Sql) SetTable(table string) {
 	s.table = table
 }
 
+// NewSql creates a new Sql writer.
 func NewSql(w io.Writer) *Sql {
 	return &Sql{w: w}
 }
